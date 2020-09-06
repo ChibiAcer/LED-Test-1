@@ -1,1 +1,117 @@
-//Testing
+#include <FastLED.h>
+
+#define DATA_PIN    5
+#define LED_TYPE    WS2811
+#define COLOR_ORDER BRG
+#define NUM_LEDS    100
+#define BRIGHTNESS  255
+
+/*
+byte realRed = 0;
+byte realGreen = 0;
+byte realBlue = 0;
+
+byte red = 255;
+byte green = 255;
+byte blue = 255;
+byte brightness = 255;
+*/
+
+CRGB leds[NUM_LEDS];
+
+  int greenchange = 0; //define a variable that we will use to alter green color
+  bool forward = true;
+  int blah = 0;
+
+
+void setup() {
+  delay(3000); // 3 second delay for recovery
+  Serial.begin(9600);
+  // tell FastLED about the LED strip configuration
+  FastLED.addLeds<LED_TYPE,DATA_PIN,COLOR_ORDER>(leds, NUM_LEDS);
+//    .setCorrection(TypicalLEDStrip)
+//    .setDither(BRIGHTNESS < 255);
+
+  // set master brightness control
+  FastLED.setBrightness(BRIGHTNESS);
+
+
+
+}
+
+void loop() {
+
+//leds[0] = CRGB(0,0,0); // sets individual LED to a color, RED, GREEN, BLUE -- numbers up to 255
+
+
+for( int i = 0; i < NUM_LEDS; i++) {
+  leds[i] = CRGB(255,greenchange,0); //sets all LEDS to whatever color i want
+}
+
+int prevgreenchange = greenchange;
+greenchange = bounce(greenchange,0,100,greendirection);
+greendirection = mydirection(greenchange,prevgreenchange);
+
+
+
+
+
+//greenValue = bounce(greenValue, greenChange, 0, 100);
+//redValue = bounce(redValue, redChange, 0, 100);
+//blueValue = bounce(blueValue, blueChange, 0, 100);
+
+
+
+
+//leds[0] = CRGB(0,0,255); //set LED 0 to blue
+
+FastLED.show(); //print the array of leds
+
+  delay(100); // 1 second delay.
+
+Serial.println(greenchange);
+
+/*
+if(greenchange >=30)
+  {
+    blah = -1; 
+    greenchange-blah;
+  }
+  else(blah=1);
+
+*/
+
+} //end of loop
+
+/*
+
+int bounce(int ramp,int mn, int mx,bool dir) {
+  dir = true;
+  if(dir){
+   if(ramp <=mx){
+    ramp++;} 
+   else {
+    dir=false;
+    ramp--;}
+} else {
+  if(ramp>mn){
+    ramp--;
+  } else {
+    dir=true;
+    ramp++;
+  }
+}
+return (ramp);
+}
+*/
+
+int bounce(int value, int valueChange, int mn, int mx){
+  if(value >= mx) {
+    valueChange = -1;
+  } else if(value <= mn) {
+    valueChange = 1; }
+    value+= valueChange;
+    return value;
+}
+  }
+}
