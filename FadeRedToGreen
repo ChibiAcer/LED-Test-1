@@ -1,0 +1,167 @@
+#include <FastLED.h>
+
+#define LED_PIN     5
+#define NUM_LEDS    100
+#define BRIGHTNESS  255
+#define LED_TYPE    WS2811
+#define COLOR_ORDER BRG
+
+CRGB leds[NUM_LEDS];
+
+
+// Put one-time initialization stuff in setup
+void setup() {
+	delay(3000); // 3 second delay to allow the Arduino to start up
+	
+  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.setBrightness(  BRIGHTNESS );
+
+}
+
+// Consider loop() the main function that the Arduino will be running
+void loop()
+{
+  
+	/*
+	for( int i = 0; i < NUM_LEDS; i++) {
+		leds[i] = CRGB(255,0,0);
+	}
+	*/
+	
+	//fill_solid( leds, NUM_LEDS, CRGB(255,0,0));
+  
+  //PulseRed();
+  //FadeRedToGreen();
+  FadeRedToGreen_v2();
+ 
+  FastLED.show(); // Send the current colors from Arduino to the light strip
+	FastLED.delay(100); // Wait for specified milliseconds before running the next update cycle; this controls how fast things change
+}
+
+// Gradually increase red to max, then decrease to off, repeat
+void PulseRed()
+{
+	static int currentRed=0; // default red to off; use static so the variable is only declared once and keeps value between every loop
+  static int currentChange=15; // amount that red will increase/decrease every update cycle
+    
+	// update the value of red
+	currentRed = currentRed + currentChange;
+  
+	if (currentRed >= 255) {
+		// red reached the max value of 255 (or more)
+		
+		currentRed = 255; // make sure red doesn't exceed the max of 255
+		currentChange = currentChange * -1; // reverse the value to change by; 15 becomes -15 so that it starts subtracting
+	}
+	if (currentRed <= 0) {
+		currentRed = 0; // make sure red doesn't become a negative value
+		currentChange = currentChange * -1; // reverse the value to change by; -15 becomes 15 so that it starts adding
+	}
+
+	// Set the currentRed value to be the color of all LEDs
+	fill_solid( leds, NUM_LEDS, CRGB(currentRed,0,0));
+}
+
+// Gradually decrease red while increasing green, then reverse
+// Results in a gradient change to yellow before it shifts to green
+void FadeRedToGreen() {
+	static int currentRed = 255;
+	static int currentGreen = 0;
+  static int currentChange = -15;
+	
+	// increase/decrease red while doing the reverse for green
+	currentRed = currentRed + currentChange;
+	currentGreen = currentGreen - currentChange;
+
+	if (currentRed >= 255) {
+		// red reached max value. Make sure sure values don't exceed 0 or 255, and reverse the direction of change
+		
+		currentRed = 255;
+		currentGreen = 0;
+		currentChange = currentChange * -1;
+	}
+	if (currentRed <= 0) {
+		// red reached zero. Make sure sure values don't exceed 0 or 255, and reverse the direction of change
+		
+		currentRed = 0;
+		currentGreen = 255;
+		currentChange = currentChange * -1;
+	}	
+	
+	// Set the current color values to be the color of all LEDs
+	fill_solid( leds, NUM_LEDS, CRGB(currentRed,currentGreen,0));
+}
+// end of FadeRedToGreen
+
+
+// Dim red to off, then light green, wait a bit, dim green to off, then light red
+#define MODE_DimRed 		0
+#define MODE_PauseRed		1
+#define MODE_LightRed		2
+#define MODE_DimGreen		3
+#define MODE_PauseGreen	4
+#define MODE_LightGreen	5
+
+#define PAUSETIME 5 // how many cycles to leave color fully illumnated before dimming again
+
+void FadeRedToGreen_v2() {
+	static int currentRed = 255; // start with red fully lit
+	static int currentGreen = 0;
+	static int colorChange = 15;
+	static int timer = 0; // variable to track how long to wait when a light reaches full value
+	static int currentMode = MODE_DimRed; // currentMode is used to track what state we're current in. Since red is lit, let's start by dimming it
+	
+	if (currentMode == MODE_DimRed) {
+		currentRed = currentRed - colorChange;
+		
+		if (currentRed <= 0) {
+			currentRed = 0;
+			currentMode = MODE_LightGreen;
+		}
+		
+	} else if (currentMode == MODE_PauseRed) {
+		timer++;
+		
+		if (timer >= PAUSETIME) {
+			timer = 0;
+			currentMode = MODE_DimRed;
+		}
+		
+	} else if (currentMode == MODE_LightRed) {
+		currentRed = currentRed + colorChange;
+		
+		if (currentRed >= 255) {
+			currentRed = 255;
+			currentMode = MODE_PauseRed;
+		}
+		
+	} else if (currentMode == MODE_DimGreen) {
+		currentGreen = currentGreen - colorChange;
+		
+		if (currentGreen <= 0) {
+			currentGreen = 0;
+			currentMode = MODE_LightRed;
+		}
+		
+	} else if (currentMode == MODE_PauseGreen) {
+		timer++;
+		
+		if (timer >= PAUSETIME) {
+			timer = 0;
+			currentMode = MODE_DimGreen;
+		}
+		
+	} else if (currentMode == MODE_LightGreen) {
+		currentGreen = currentGreen + colorChange;
+		
+		if (currentGreen >= 255) {
+			currentGreen = 255;
+			currentMode = MODE_PauseGreen;
+		}
+		
+	}
+	
+	// Set the current color values to be the color of all LEDs
+	fill_solid( leds, NUM_LEDS, CRGB(currentRed,currentGreen,0));	
+}
+// end of FadeRedToGreen_v2
